@@ -1,0 +1,17 @@
+###1. I need to implement the attached LRU Cache problem in JavaScript
+Before writing any code, help me think through the problem.
+I want to understand:
+1.  what data structures would be appropriate
+2.  how to achieve O(1) get() and put()
+3.  what edge cases I should consider
+4. a simple implementation plan
+Don't generate code yet. Let's discuss the approach first.
+
+###2. Let's see the operational flow before we move to JS implementation.
+
+###3. Okay, we can move to code implematation now.
+Make sure to follow best coding pattern and principle (Like SOLID)
+
+###4. Create the readme md
+
+###5. Add TTL section in readme and discuss approach and trade-offs with demo output.
