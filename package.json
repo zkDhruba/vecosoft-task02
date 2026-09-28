@@ -1,0 +1,13 @@
+{
+  "name": "lru-cache",
+  "version": "1.0.0",
+  "description": "O(1) LRU Cache with optional TTL support",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "demo": "node demo.js",
+    "test": "node --test test/lru-cache.test.js"
+  },
+  "keywords": ["lru", "cache"],
+  "license": "MIT"
+}
