@@ -89,6 +89,59 @@ List helpers (`addToHead`, `remove`, `moveToHead`, `removeTail`) are all pointer
 
 No extra structures grow with the number of operations beyond that bound.
 
+## Bonus: TTL / expiration
+
+### Approach
+
+TTL is implemented as **lazy expiration** on top of the same Map + doubly linked list design:
+
+1. Each node may store an optional `expiresAt` timestamp (`null` = never expires).
+2. `put(key, value, ttlMs)` sets `expiresAt = now + ttlMs` when `ttlMs` is provided.
+3. On `get` / `put`, if the entry exists but `now >= expiresAt`, it is removed from both the map and the list and treated as a miss (`-1` for `get`).
+4. During capacity eviction, expired nodes near the LRU end are cleaned up first so a dead entry does not waste a slot forever.
+5. A injectable `now` clock (`new Cache(capacity, { now: () => … })`) keeps demos and tests deterministic without real `sleep`.
+
+No background timer or secondary heap is used — expiry is checked only when an entry is touched or space is needed.
+
+### Trade-offs
+
+| Choice | Upside | Downside |
+| --- | --- | --- |
+| **Lazy expiration** | Keeps `get` / `put` **O(1)** on average; no timer threads; simple to reason about | An expired key that is never accessed again can sit until eviction / another write needs capacity |
+| **No expiry min-heap / timer wheel** | No extra **O(log n)** structures; API stays small | Cannot proactively free memory the instant TTL elapses |
+| **Injectable `now`** | Deterministic tests and demos | Callers that need wall-clock TTL just use the default `Date.now` |
+
+For this assignment, lazy expiry is enough: correctness on access is guaranteed, and complexity stays aligned with the O(1) LRU requirement.
+
+### Demo output
+
+Run `node demo.js` (or `npm run demo`). TTL section from the script:
+
+```js
+let clock = 1_000;
+const ttlCache = new Cache(2, { now: () => clock });
+
+ttlCache.put("X", 1, 50); // expires at t = 1050
+ttlCache.put("Y", 2);
+
+console.log("t=1000 get X =>", ttlCache.get("X")); // still valid
+
+clock = 1_060;
+console.log("t=1060 get X (expired) =>", ttlCache.get("X"));
+console.log("t=1060 get Y =>", ttlCache.get("Y"));
+```
+
+Actual console output:
+
+```text
+--- TTL bonus demo ---
+t=1000 get X => 1
+t=1060 get X (expired) => -1
+t=1060 get Y => 2
+```
+
+At `t=1000`, `X` is still within its 50ms TTL. After advancing the clock past `1050`, `get("X")` returns `-1` (expired and removed), while non-TTL key `Y` remains available.
+
 ## How to run
 
 Requires **Node.js 18+** (ES modules + built-in test runner). No npm dependencies.
